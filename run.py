@@ -1,30 +1,33 @@
 import cv2
-from src.hand_tracker_nms import HandTrackerNMS
+import mediapipe as mp
+import numpy as np
 import src.extra
 import joblib
 
 
 WINDOW = "Hand Tracking"
-PALM_MODEL_PATH = "models/palm_detection_without_custom_op.tflite"
-LANDMARK_MODEL_PATH = "models/hand_landmark.tflite"
-ANCHORS_PATH = "models/anchors.csv"
 
 connections = src.extra.connections
 int_to_char = src.extra.classes
 
-detector = HandTrackerNMS(
-    PALM_MODEL_PATH,
-    LANDMARK_MODEL_PATH,
-    ANCHORS_PATH,
-    box_shift=0.2,
-    box_enlarge=1.3
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(
+    static_image_mode=False,
+    max_num_hands=1,
+    min_detection_confidence=0.6,
+    min_tracking_confidence=0.6
 )
 
 gesture_clf = joblib.load(r'models\\gesture_clf.pkl')
 
-cv2.namedWindow(WINDOW)
-capture = cv2.VideoCapture(0)
+# Compatibility patch for old scikit-learn GaussianNB model
+if hasattr(gesture_clf, "sigma_") and not hasattr(gesture_clf, "var_"):
+    gesture_clf.var_ = gesture_clf.sigma_
 
+cv2.namedWindow(WINDOW)
+capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 word = []
 letter = ""
@@ -32,8 +35,25 @@ staticGesture = 0
 
 while True:
     hasFrame, frame = capture.read()
+
+    if not hasFrame or frame is None:
+        continue
+
+    frame = cv2.flip(frame, 1)
+    h, w, c = frame.shape
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    points, bboxes, joints = detector(image)
+    results = hands.process(image)
+
+    points = None
+    joints = None
+
+    if results.multi_hand_landmarks and len(results.multi_hand_landmarks) > 0:
+        landmarks = results.multi_hand_landmarks[0]
+        
+        # Extract landmarks as (21, 2) array in pixel coordinates
+        joints = np.array([[lm.x * w, lm.y * h] for lm in landmarks.landmark])
+        points = joints
+    
     if points is not None:
         src.extra.draw_points(points, frame)
         pred_sign = src.extra.predict_sign(joints, gesture_clf, int_to_char)
@@ -42,7 +62,7 @@ while True:
         else:
             letter = pred_sign
             staticGesture = 0
-        if staticGesture > 6:
+        if staticGesture > 12:
             word.append(letter)
             staticGesture = 0
 
@@ -50,15 +70,14 @@ while True:
         try:
             if word[-1] != " ":
                 staticGesture += 1
-                if staticGesture > 6:
+                if staticGesture > 12:
                     word.append(" ")
                     staticGesture = 0
         except IndexError:
-            print("list 'word' is empty")
+            pass
 
     src.extra.draw_sign(word, frame, (50, 460))
 
-    # out.write(frame)
     cv2.imshow(WINDOW, frame)
     key = cv2.waitKey(1)
     if key == 27:

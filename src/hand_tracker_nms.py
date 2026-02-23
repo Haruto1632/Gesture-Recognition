@@ -192,11 +192,34 @@ class HandTrackerNMS:
         # calculating transformation from img_pad coords
         # to img_landmark coords (cropped hand image)
         scale = np.array(np.max(img.shape[:2]) / 256.0)
+        # ===== SAFETY GUARD (VERY IMPORTANT) =====
+        if source is None:
+            return None, None, None
 
-        Mtr = cv2.getAffineTransform(
-            source * scale,
-            self._target_triangle
-        )
+        # convert safely
+        source = np.array(source, dtype=np.float32)
+
+        # must be exactly 3 points
+        if source.shape != (3, 2):
+            return None, None, None
+
+        # must not contain NaN or inf
+        if not np.isfinite(source).all():
+            return None, None, None
+
+        # ensure target is also correct
+        target = np.array(self._target_triangle, dtype=np.float32)
+        if target.shape != (3, 2):
+            return None, None, None
+
+        # ===== SAFE AFFINE =====
+        try:
+            Mtr = cv2.getAffineTransform(
+                source * scale,
+                target
+            )
+        except cv2.error:
+            return None, None, None
 
         img_landmark = cv2.warpAffine(
             self._im_normalize(img_pad), Mtr, (256, 256)
