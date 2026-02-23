@@ -1,23 +1,146 @@
-# Hand tracker and ASL recognition
+# 🧠 Real-Time ASL Gesture Recognition using MediaPipe
 
-This work is based on Google's work [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands)
+An AI-powered assistive communication system that enables real-time American Sign Language (ASL) alphabet recognition using computer vision and machine learning. This project bridges the communication gap between deaf/mute individuals and the general public by converting hand gestures into readable text.
 
-Thanks to:
- - [wolterlw](https://github.com/wolterlw/hand_tracking) for script that runs model itself using `TensorFlow Lite Interpreter`;
- - [metalwhale](https://github.com/metalwhale/hand_tracking) for `palm_detection_without_custom_op.tflite` and visualization results;
- - [FabianHertwig](https://github.com/FabianHertwig/hand_tracking) for using Non-Max-Suppression algorithm, implemented by Adrian Rosebrock;
- 
-## How does it work?
-Palm is recognized by BlazePalm Detector and then cropping 256x256 region for prediction 2-D or 3-D coordinates of hand landmark. Using this landmarks I calculate 9 Euclidean distances between:
-(20, 0), (16, 0), (12, 0), (8, 0), (4, 0), (20, 16), (16, 12), (12, 8), (8, 4).
+---
 
-![](https://github.com/aqua1907/hand_landmark/blob/master/images/photo_2020-04-28_15-19-47.jpg)
+## 🚀 Features
 
-Combination of 9 euclidean distances represent a letter of sign language alphabet. Bayesian classifier predicts a shown sign based on a combination of 9 euclidean distances.
-![Result](https://github.com/aqua1907/hand_landmark/blob/master/images/hand_landmark_flex.gif?raw=True "Result")
+* ✋ Real-time hand tracking using MediaPipe Hands
+* 🔤 ASL alphabet recognition (A–Z)
+* ⚡ Lightweight GaussianNB classifier
+* 🎥 Live webcam inference
+* 🧩 Word formation from detected letters
+* 🛡️ Stable prediction with smoothing
+* 🖥️ Works on standard laptops (no special hardware)
+* 🔧 Windows-friendly setup
 
-## Files
-- `explore_data.ipynb` — Inspect raw key points data and apply Isolation forest. [Link](explore_data.ipynb)
-- `train_model.ipynb` — Train Bayesian classifier on prepared data. [Link](run_ipynb.ipynb)
-- `run.py` — run script on video feed. [Link](run.py)
-- `run_on_image.py` — run script on image. [Link](run_on_image.py)
+---
+
+## 🏗️ System Architecture
+
+```
+Webcam → MediaPipe Hands → Landmark Extraction → GaussianNB Classifier → Letter → Word Builder → Display
+```
+
+---
+
+## 📂 Project Structure
+
+```
+Gesture-Recognition/
+│
+├── models/
+│   ├── gesture_clf.pkl
+│
+├── src/
+│   └── extra.py
+│
+├── run.py
+├── README.md
+└── requirements.txt
+```
+
+---
+
+## 🧰 Tech Stack
+
+* Python 3.10
+* OpenCV
+* MediaPipe
+* NumPy
+* Scikit-learn
+* Joblib
+
+---
+
+## ⚙️ Installation
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/Haruto1632/Gesture-Recognition.git
+cd Gesture-Recognition
+```
+
+---
+
+### 2️⃣ Create virtual environment
+
+```bash
+py -3.10 -m venv .venv
+.venv\Scripts\activate
+```
+
+---
+
+### 3️⃣ Install dependencies
+
+```bash
+pip install mediapipe==0.10.14 opencv-python numpy scikit-learn joblib
+```
+
+---
+
+## ▶️ Running the Project
+
+```bash
+python run.py
+```
+
+### 🎮 Controls
+
+* **ESC** → Exit
+* **Backspace** → Delete last character
+* **C** → Clear word (if enabled)
+
+---
+
+## 🧪 How It Works
+
+1. Webcam captures live video
+2. MediaPipe detects hand landmarks
+3. Landmarks converted to feature vector
+4. GaussianNB model predicts ASL letter
+5. Stable letters form words
+6. Output displayed in real time
+
+---
+
+## 📈 Current Limitations
+
+* Supports ASL alphabet only (static signs)
+* Sensitive to very poor lighting
+* Works best with single hand in frame
+* Dynamic ASL words not yet implemented
+
+---
+
+## 🔮 Future Improvements
+
+* 🔊 Text-to-speech output
+* 📱 Mobile deployment
+* 🧠 Deep learning classifier
+* ✌️ Two-hand support
+* 🗣️ Dynamic ASL gesture recognition
+* 🌐 Web-based interface
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for improvements.
+
+---
+
+## 📜 License
+
+This project is open-source and available under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Haruto アビシェク**
+
+If you found this helpful, consider ⭐ starring the repo!
